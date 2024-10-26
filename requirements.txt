@@ -1,6 +1,0 @@
-aiofiles<=23.1.0
-python-telegram-bot[job-queue,webhooks]==20.3
-
-hammett~=0.10.0
-setuptools~=75.1.0
-pymystem3~=0.2.0
