@@ -1,0 +1,933 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Админ Меню</title>
+    <link rel="icon" href="../static/images/icon.png" type="image/x-icon">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f0faff;
+            padding: 20px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100%;
+            margin: 0;
+            flex-direction: column;
+            position: relative; /* Для позиционирования уведомления */
+        }
+        h1 {
+            color: #003366;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+        .tag-container {
+            display: flex;
+            flex-wrap: wrap;
+            border: 1px solid #007bff;
+            padding: 10px;
+            border-radius: 12px;
+            background-color: white;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            max-width: 600px;
+            max-height: calc(100vh - 350px);
+            overflow-y: auto;
+            overflow-x: hidden;
+            margin-bottom: 20px;
+        }
+        .message-container {
+            border: 1px solid #007bff;
+            padding: 10px;
+            border-radius: 12px;
+            background-color: white;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            max-width: 600px;
+            max-height: calc(100vh - 350px);
+            overflow-y: auto;
+            overflow-x: hidden;
+            margin-bottom: 20px;
+        }
+        .category-container {
+            display: flex;
+            flex-direction: column;
+            flex-wrap: nowrap;
+            border: 1px solid #007bff;
+            padding: 10px;
+            border-radius: 12px;
+            background-color: white;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            max-width: 600px;
+            max-height: calc(100vh - 350px);
+            overflow-y: auto;
+            overflow-x: hidden;
+            margin-bottom: 20px;
+        }
+
+        .checkmark {
+            display: inline-block;
+            width: 0;
+            height: 0;
+            border-left: 6px solid transparent;
+            border-right: 6px solid transparent;
+            border-bottom: 10px solid #007bff; /* Цвет галочки */
+            transform: rotate(135deg); /* Поворачиваем на 135 градусов, чтобы галочка смотрела вверх */
+            margin-left: 5px; /* Отступ между текстом и галочкой */
+            vertical-align: middle; /* Вертикальное выравнивание */
+        }
+
+        .tag {
+            background-color: #007bff;
+            color: white;
+            padding: 8px 12px;
+            margin: 5px;
+            border-radius: 15px;
+            display: flex;
+            align-items: center;
+            font-size: 14px;
+            transition: background-color 0.2s;
+        }
+        .tag:hover {
+            background-color: #0056b3;
+        }
+        .remove-button {
+            margin-left: 8px;
+            cursor: pointer;
+            color: #ffffff;
+            font-weight: bold;
+        }
+        .remove-category-button {
+            margin-right: 8px;
+            cursor: pointer;
+            color: #000000;
+            font-weight: bold;
+            font-size: 125%;
+            margin-top: 1%;
+            text-align: right;
+        }
+        .tag-input {
+            border: none;
+            outline: none;
+            padding: 10px;
+            border-radius: 15px;
+            background-color: #ffffff;
+            margin-top: 5px;
+            flex: 1;
+            font-size: 14px;
+            color: #007bff;
+            width: 100%;
+            min-width: 200px;
+        }
+        .tag-input:focus {
+            border: 1px solid #ffffff;
+        }
+        .message-input {
+            border: 1px solid #007bff;
+            outline: none;
+            padding: 10px;
+            border-radius: 15px;
+            background-color: #ffffff;
+            margin-top: 5px;
+            flex: 1;
+            font-size: 14px;
+            color: #007bff;
+            min-width: 20px;
+        }
+        .message-input:focus {
+            border: 1px solid #ffffff;
+        }
+        .button-container {
+            display: flex;
+            justify-content: center;
+            margin-top: 10px;
+        }
+        .submit-button {
+            background-color: #0088cc;
+            color: white;
+            padding: 12px 24px;
+            border: none;
+            border-radius: 20px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: background-color 0.2s, transform 0.1s;
+            display: flex;
+            align-items: center;
+        }
+        .submit-button:hover {
+            background-color: #007bb8;
+            transform: scale(1.05);
+        }
+        .submit-button i {
+            margin-right: 8px;
+        }
+        .notification {
+            position: absolute;
+            top: 50px; /* Отступ от верха */
+            left: 20px;
+            background-color: rgba(255, 0, 0, 0.7);
+            color: white;
+            padding: 10px 15px; /* Уменьшенная ширина */
+            border-radius: 8px;
+            display: none; /* Скрыто по умолчанию */
+            transition: opacity 0.5s, transform 0.5s;
+            transform: translateY(-20px); /* Сдвигаем вверх при появлении */
+            width: 250px; /* Уменьшенная ширина уведомления */
+        }
+        .notification .close-button {
+            background: transparent;
+            border: none;
+            color: white;
+            cursor: pointer;
+            font-size: 16px;
+            margin-left: 10px;
+        }
+        .success-notification {
+            position: fixed; /* Фиксированное позиционирование */
+            top: 50px; /* Отступ от верхней части */
+            align-items: center;
+            background-color: white; /* Цвет фона */
+            border: 2px solid #007bff; /* Синие бортики */
+            color: #003366; /* Цвет текста */
+            padding: 15px; /* Отступы внутри уведомления */
+            border-radius: 8px; /* Закругленные углы */
+            width: 300px; /* Фиксированная ширина */
+            text-align: center; /* Выравнивание текста по центру */
+            display: none; /* Скрыто по умолчанию */
+            transition: opacity 0.5s, transform 0.5s; /* Плавный переход */
+        }
+        .success-notification .close-button {
+            background: transparent;
+            border: none;
+            color: #003366;
+            cursor: pointer;
+            font-size: 16px;
+            margin-left: 10px;
+        }
+        .image-dropdown {
+            width: 20px;
+            height: 20px;
+            margin-left: 5px; /* Отступ между текстом и стрелкой */
+            overflow: hidden; /* Скрываем части изображения, выходящие за пределы */
+            margin-top: 3%;
+            align-items: center;
+        }
+
+        .no-select{
+            user-select: none; /* Отключаем выделение текста */
+            -webkit-user-select: none; /* Для Safari */
+            -moz-user-select: none; /* Для Firefox */
+            -ms-user-select: none; /* Для Internet Explorer/Edge */
+        }
+        .category-header {
+            display: flex; /* Включаем flexbox */
+            font-size: 150%;
+            line-height: 1; /* Убедитесь, что высота строки текста минимальна */
+            align-items: normal;
+            margin-bottom: 10px;
+        }
+        .flipped {
+            transform: rotate(180deg); /* Поворачиваем изображение на 180 градусов */
+        }
+        .submit-button {
+            background-color: #0088cc;
+            color: white;
+            padding: 12px 24px;
+            border: none;
+            border-radius: 20px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: background-color 0.2s, transform 0.1s;
+            display: flex;
+            align-items: center;
+        }
+        .submit-button:hover {
+            background-color: #007bb8;
+            transform: scale(1.05);
+        }
+        .help-container {
+            position: absolute;
+            right: 60px;
+            top: 80px;
+        }
+        .admin-container {
+            position: absolute;
+            left: 60px;
+            top: 80px;
+        }
+
+        @media (max-width: 600px) {
+            .help-container {
+                position: fixed; /* Меняем на relative для мобильных */
+                right: 0; /* Убираем отступ справа */
+                top: 0; /* Убираем отступ сверху */
+                margin: 10px; /* Добавляем небольшой отступ */
+                width: 90%; /* Увеличиваем ширину для мобильных устройств */
+                font-size: 12px; /* Увеличиваем размер шрифта */
+            }
+            .admin-container {
+                    position: fixed; /* Меняем на relative для мобильных */
+                    left: 0; /* Убираем отступ справа */
+                    top: 0; /* Убираем отступ сверху */
+                    margin: 10px; /* Добавляем небольшой отступ */
+                    width: 90%; /* Увеличиваем ширину для мобильных устройств */
+                    font-size: 12px; /* Увеличиваем размер шрифта */
+            }
+            .message-container {
+                font-size: 10px; /* Меньший размер шрифта для содержимого */
+            }
+        }
+        .dropdown {
+            position: relative;
+            display: inline-block;
+        }
+        .dropdown-select {
+            background-color: #ffffff;
+            border: 1px solid #007bff;
+            color: #007bff;
+            padding: 10px;
+            border-radius: 25px; /* Закругленные углы */
+            cursor: pointer;
+            font-size: 16px;
+            transition: border-color 0.2s;
+            width: 200px; /* Ширина кнопки */
+            text-align: center; /* Центрируем текст */
+        }
+        .dropdown-select:hover {
+            border-color: #0056b3;
+        }
+        .dropdown-content {
+            display: none;
+            position: absolute; /* Оставляем absolute */
+            background-color: #ffffff;
+            border: 1px solid #007bff;
+            border-radius: 25px; /* Закругленные углы */
+            z-index: 1;
+            margin-top: 5px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+            left: 0; /* Выравнивание по левому краю родителя */
+            right: 0; /* Выравнивание по правому краю родителя */
+            overflow: visible;
+        }
+        .dropdown-content div {
+            color: #007bff;
+            padding: 10px;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+        .dropdown-content div:hover {
+            background-color: #f0faff;
+        }
+        .show {
+            display: block;
+        }
+        .login-input {
+            display: inline-block;
+            border: 2px solid #007bff;
+            border-radius: 20px;
+            padding: 10px 15px;
+            font-size: 16px;
+            width: 250px;
+            outline: none;
+            background-color: white;
+            color: #333;
+            transition: border-color 0.3s;
+            position: relative;
+        }
+        .user-form {
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            background-color: #ffffff;
+            padding: 20px;
+            margin: 20px 0;
+        }
+
+        .user-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .user-table th, .user-table td {
+            padding: 10px;
+            border-bottom: 1px solid #ddd;
+        }
+
+        .remove-button {
+            font-weight: bold;
+            font-size: 20px;
+        }
+    </style>
+</head>
+<body>
+    <div class="button-container" style="position: absolute; right: 20px; top: 20px">
+        <button class="submit-button" id="Logout" onclick="LogOut()">
+            <i class="fas fa-sign-out-alt" style="margin-right: 8px"></i> Выйти
+        </button>
+    </div>
+    <div>
+        <h1>Ключевые слова:</h1>
+        <div class="category-container" id="categoriesContainer"></div>
+        <div style="display: flex; flex-direction: column; align-items: flex-start;">
+            <label for="categoryInput" style="font-size: 16px; color: gray; margin-bottom: 4px;">Категории:</label>
+            <input type="text" placeholder="Введите имя категории..." id="categoryInput" class="login-input" />
+        </div>
+        <div class="button-container">
+            <button class="submit-button" id="addCategoryButton" onclick="createCategory()">
+                <i class="fas fa-plus"></i> Добавить категорию
+            </button>
+        </div>
+        <div class="button-container">
+            <button class="submit-button" id="submitButton">
+                <i class="fas fa-paper-plane"></i> Выложить
+            </button>
+        </div>
+
+        <div class="help-container">
+            <h1>Справка:</h1>
+            <div class="message-container" id="categoriesMessagesContainer" style="margin-right: 10px; font-size: 10px;">
+                <h1>{name} - имя пользователя</h1>
+                <h1>{nickname} - никнейм пользователя</h1>
+                <h1>{time} - текущее время</h1>
+                <h1>{date} - текущая дата</h1>
+            </div>
+        </div>
+        <div class="admin-container message-container" style="overflow: visible;" id="AdminStuff" hidden>
+            <h1>Админ меню</h1>
+            <div style="display: flex; flex-direction: column; align-items: flex-start;">
+                <label for="LoginInput" style="font-size: 16px; color: gray; margin-bottom: 4px;">Имя:</label>
+                <input type="text" placeholder="Введите логин..." id="LoginInput" class="login-input" />
+            </div>
+
+            <div style="display: flex; flex-direction: column; align-items: flex-start;">
+                <label for="PasswordInput" style="font-size: 16px; color: gray; margin-bottom: 4px;">Пароль:</label>
+                <input type="text" placeholder="Введите пароль..." id="PasswordInput" class="login-input" />
+            </div>
+            <div class="dropdown" style="padding-top: 10px">
+                <div class="dropdown-select" id="dropdownSelect">Выберите тип аккаунта:</div>
+                <div class="dropdown-content" id="dropdownContent">
+                    <div data-value=true>Админ</div>
+                    <div data-value=false >Редактор</div>
+                </div>
+            </div>
+            <button class="submit-button" style="margin-top: 10px" id="addUserButton" onclick="AddUser()">
+                <i class="fas fa-user-plus"></i> Добавить пользователя
+            </button>
+            <div id="Users"></div>
+
+        </div>
+         <div class="notification" id="notification">
+            <span id="notificationMessage"></span>
+            <button class="close-button" id="closeNotification">&times;</button>
+        </div> <!-- Уведомление -->
+        <div class="success-notification" id="successNotification">
+            <span id="successMessage"></span>
+            <button class="close-button" id="closeSuccessNotification">&times;</button>
+        </div> <!-- Уведомление об успехе -->
+    </div>
+
+
+    <script>
+        const dropdownSelect = document.getElementById('dropdownSelect');
+        const dropdownContent = document.getElementById('dropdownContent');
+
+        dropdownSelect.addEventListener('click', () => {
+            dropdownContent.classList.toggle('show');
+        });
+
+        // Обработка выбора элемента
+        dropdownContent.addEventListener('click', (event) => {
+            if (event.target.matches('div')) {
+                dropdownSelect.textContent = event.target.textContent; // Обновляем текст выбранного элемента
+                dropdownContent.classList.remove('show'); // Закрываем выпадающий список
+            }
+        });
+
+        // Закрыть выпадающий список при клике вне его
+        window.addEventListener('click', (event) => {
+            if (!event.target.matches('.dropdown-select')) {
+                if (dropdownContent.classList.contains('show')) {
+                    dropdownContent.classList.remove('show');
+                }
+            }
+        });
+        // Функция для проверки недопустимых символов
+        function isValidTag(tag) {
+            const invalidChars = ['"', "'"]; // Недопустимые символы
+            return !invalidChars.some(char => tag.includes(char));
+        }
+        var selectedValue;
+        dropdownContent.addEventListener('click', function(event) {
+            const target = event.target;
+            if (target.dataset.value !== undefined) {
+                selectedValue = target.dataset.value;
+            }
+        });
+        function getCookie(name) {
+            const value = `; ${document.cookie}`;
+            const parts = value.split(`; ${name}=`);
+            if (parts.length === 2) return parts.pop().split(';').shift();
+        }
+
+      function GetUsers() {
+    $.ajax({
+        url: 'getusers', // Укажите ваш URL
+        method: 'GET',
+        success: function (response) {
+            const form = document.createElement('form');
+            form.className = 'user-form';
+            form.style.borderRadius = '8px';
+            form.style.overflow = 'hidden';
+            form.style.boxShadow = '0 2px 10px rgba(0, 0, 0, 0.1)';
+            form.style.backgroundColor = '#ffffff';
+            form.style.padding = '20px';
+            form.style.margin = '20px 0';
+            form.style.border = "2px solid red";
+
+            const userTable = document.createElement('table');
+            userTable.className = 'user-table';
+            userTable.style.width = '100%';
+            userTable.style.borderCollapse = 'collapse';
+
+            // Создание заголовка таблицы
+            const headerRow = document.createElement('tr');
+            const headerCell = document.createElement('th');
+            headerCell.textContent = 'Пользователи';
+            headerCell.style.backgroundColor = '#007BFF'; // Синий цвет
+            headerCell.style.color = 'white';
+            headerCell.style.padding = '10px';
+            headerCell.style.textAlign = 'left';
+            headerCell.style.borderRadius = '8px 8px 0 0'; // Закругление верхних углов
+            headerCell.setAttribute('colspan', '2'); // Устанавливаем colspan для ширины на всю таблицу
+            headerRow.appendChild(headerCell);
+            userTable.appendChild(headerRow);
+
+            // Заполнение таблицы пользователями
+            Object.keys(response.users).forEach((key) => {
+                const userRow = document.createElement('tr');
+                userRow.style.borderBottom = '1px solid #ddd';
+
+                const userCell = document.createElement('td');
+                userCell.textContent = response.users[key];
+                userCell.id = "text";
+                userCell.style.padding = '10px';
+                userCell.style.borderBottom = '1px solid #ddd';
+
+                const removeButtonCell = document.createElement('td');
+                removeButtonCell.style.textAlign = 'right'; // Выравнивание кнопки вправо
+                const removeButton = document.createElement('span');
+                removeButton.className = 'remove-button';
+                removeButton.textContent = '×';
+                removeButton.style.cursor = 'pointer';
+                removeButton.style.color = '#FF0000'; // Красный цвет
+                removeButton.style.marginLeft = '10px';
+
+                if(getCookie("Login") !== response.users[key]) {
+                    // Обработчик события удаления
+                    removeButton.onclick = function () {
+                        const name = response.users[key];
+                        $.ajax({
+                            url: 'remuser', // Укажите ваш URL
+                            method: 'POST',
+                            data: {"name": name}, // Отправляем данные в формате формы
+                            success: function (response) {
+                                if (response.message === true) {
+                                    showSuccessNotification(name + ' был успешно добавлен!');
+                                    GetUsers();
+                                } else {
+                                    showNotification('Данный пользователь не существует!');
+                                }
+                            },
+                            error: function (jqXHR, textStatus, errorThrown) {
+                                console.error('Ошибка:', textStatus, errorThrown);
+                                showNotification('Ошибка отправки данных.');
+                            }
+                        });
+                    };
+
+                    removeButtonCell.appendChild(removeButton);
+                }
+
+                userRow.appendChild(userCell);
+                userRow.appendChild(removeButtonCell);
+                userTable.appendChild(userRow);
+            });
+
+            // Добавление таблицы в форму
+            form.appendChild(userTable);
+
+            // Добавление формы в элемент с id "Users"
+            const usersContainer = document.getElementById('Users');
+            usersContainer.innerHTML = ''; // Очистить контейнер перед добавлением новой формы
+            usersContainer.appendChild(form);
+        },
+        error: function (jqXHR, textStatus, errorThrown) {
+            console.error('Ошибка:', textStatus, errorThrown);
+            showNotification('Ошибка отправки данных.');
+        }
+    });
+}
+
+
+        function AddUser() {
+            const login = document.getElementById("LoginInput").value;
+            const password = document.getElementById("PasswordInput").value;
+            const IsAdmin = selectedValue;
+
+            console.log(IsAdmin, login, password)
+            if(!isValidTag(login) || !isValidTag(password)){
+                showNotification("Имя или пароль не могу содержать знаки \", \'")
+                return
+            }
+            if(IsAdmin === null){
+                showNotification("Выберите тип аккаунта!")
+            }
+            if(login === "" || password === ""){
+                showNotification("Логин и пароль не должны быть пустыми!")
+            }
+            if(login !== "" && password !== "" && IsAdmin != null){
+                $.ajax({
+                    url: 'adduser', // Укажите ваш URL
+                    method: 'POST',
+                    data: {"login": login, "password": password, "admin": IsAdmin}, // Отправляем данные в формате формы
+                    success: function (response) {
+                        if(response.message === true) {
+                            showSuccessNotification('Новый пользователь был успешно добавлен!');
+                            GetUsers();
+                        }
+                        else{
+                            showNotification('Данный пользователь уже существует!');
+
+                        }
+                    },
+                    error: function (jqXHR, textStatus, errorThrown) {
+                        console.error('Ошибка:', textStatus, errorThrown);
+                        showNotification('Ошибка отправки данных.');
+                    }
+                });
+            }
+        }
+        function LogOut(){
+            document.cookie = 'Login=; Max-Age=-1;';
+            document.cookie = 'Password=; Max-Age=-1;';
+            showSuccessNotification("Вы успешно вышли из аккаунта!")
+            setTimeout(function () {
+                window.location.href = '/login';
+            }, 1000);
+        }
+         function IsAdmin() {
+
+            $.ajax({
+                url: 'Isadmin', // Укажите ваш URL
+                method: 'GET',
+                success: function (response) {
+                    console.log(response.message)
+                    if(response.message === true) {
+                        document.getElementById("AdminStuff").hidden = false;
+                        GetUsers();
+                    }
+                },
+                error: function (jqXHR, textStatus, errorThrown) {
+                    console.error('Ошибка:', textStatus, errorThrown);
+                    showNotification('Ошибка отправки данных.');
+                }
+            });
+        }
+        function IsLogined() {
+
+            $.ajax({
+                url: 'Islogined', // Укажите ваш URL
+                method: 'GET',
+                success: function (response) {
+                    console.log(response.message)
+                    if(response.message === false) {
+                        window.location.href = '/login';
+                    }
+                },
+                error: function (jqXHR, textStatus, errorThrown) {
+                    console.error('Ошибка:', textStatus, errorThrown);
+                    showNotification('Ошибка отправки данных.');
+                }
+            });
+        }
+        const tagInput = document.getElementById('tagInput');
+        const tagContainer = document.getElementById('tagContainer');
+        const submitButton = document.getElementById('submitButton');
+        const notification = document.getElementById('notification');
+        const successNotification = document.getElementById('successNotification');
+        const notificationMessage = document.getElementById('notificationMessage');
+        const successMessage = document.getElementById('successMessage');
+        const closeNotification = document.getElementById('closeNotification');
+        const closeSuccessNotification = document.getElementById('closeSuccessNotification');
+        var categoriesData = [];
+
+
+        function createCategoryByName(name) {
+            const category = document.createElement('div');
+            category.className = 'category';
+            category.id = 'category_' + name;
+
+            const header = document.createElement('div');
+            header.className = 'category-header';
+            header.style.display = 'flex';
+            header.style.alignItems = 'center';
+            header.style.justifyContent = 'space-between'; // Разделяем элементы по краям
+
+            const headerText = document.createElement('h3');
+            headerText.textContent = name; // Устанавливаем текст заголовка
+            headerText.style.margin = "5px 0"; // Отступы для заголовка
+
+            const arrow = document.createElement('img'); // Создаём элемент для стрелки
+            arrow.src = "../static/images/Dropdown.png"; // Применяем класс для стилевого оформления
+            arrow.alt = "Перевернутая картинка";
+            arrow.className = "image-dropdown";
+            arrow.classList.add('flipped');
+
+            const leftContainer = document.createElement('div'); // Контейнер для текста и стрелки
+            leftContainer.style.display = 'flex';
+            leftContainer.style.alignItems = 'center';
+
+            leftContainer.appendChild(headerText);
+            leftContainer.appendChild(arrow);
+
+            const removeButton = document.createElement("span");
+            removeButton.className = "remove-category-button";
+            removeButton.textContent = "×";
+
+            // Добавляем контейнеры в заголовок
+            header.appendChild(leftContainer);
+            header.appendChild(removeButton);
+
+            const input = document.createElement('input');
+            input.type = 'text';
+            input.className = "tag-input";
+            input.placeholder = "Введите слово и нажмите Enter";
+
+
+            const tagContainer = document.createElement('div');
+            tagContainer.className = 'tag-container';
+            tagContainer.id = "tagContainer_" + name;
+            tagContainer.appendChild(input)
+            const Container = document.createElement('div');
+            Container.className = 'message-container';
+            Container.appendChild(tagContainer)
+            header.onclick = () => {
+                arrow.classList.toggle('flipped'); // Переключаем класс при клике
+                const containerDisplay = Container.style.display; // Проверяем состояние Container
+                Container.style.display = (containerDisplay === 'none') ? 'block' : 'none'; // Переключаем
+            };
+
+
+
+
+            category.appendChild(header);
+            category.appendChild(Container);
+            document.getElementById("categoriesContainer").appendChild(category);
+            categoriesData.push(name);
+
+            $(document).on('keypress', '.tag-input', function(event) {
+                if (event.key === 'Enter' && this.value.trim()) {
+                    const tags = this.value.split(',').map(tag => tag.trim()).filter(tag => tag);
+                    tags.forEach(tag => {
+                        if (isValidTag(tag)) {
+                            const parentId = $(this).parent().attr('id');
+                            addTag(tag, parentId.slice(13).trim());
+                        } else {
+                            showNotification('Тег не должен содержать недопустимые символы: \", \'' );
+                        }
+                    });
+                    this.value = '';
+                }
+            });
+
+            const headerText2 = document.createElement('h3');
+            headerText2.textContent = "Сообщения Сценария:"; // Устанавливаем текст заголовка
+            headerText2.style.margin = "5px 0"; // Отступы для заголовка
+
+            const input2 = document.createElement('textarea');
+            input2.className = "message-input";
+            input2.placeholder = "Введите текст для бота...";
+            input2.id = "input";
+            input2.style.resize = 'none'; // Запретить изменение размера, если нужно
+            const tagContainer2 = document.createElement('div');
+            tagContainer2.className = 'message-container';
+            tagContainer2.id = "messageContainer_" + name;
+            tagContainer2.appendChild(headerText2)
+            tagContainer2.appendChild(input2)
+            Container.appendChild(tagContainer2)
+        }
+        // Функция для создания категории
+        function createCategory() {
+            const name = document.getElementById("categoryInput").value;
+            if (categoriesData.includes(name)){
+                showNotification("Данная категория уже существует!");
+                return;
+            }
+            if (name === ""){
+                showNotification("Имя категории не может быть пустым");
+                return;
+            }
+            if (isValidTag(name)) {
+                createCategoryByName(name)
+            }
+            else{
+                 showNotification("Имя категории не может содержать знаки: \", \'")
+            }
+        }
+submitButton.addEventListener('click', () => {
+            let words = {};
+            let messages = {};
+            try {
+               categoriesData.forEach(tag => {
+                    const tagsContainer = document.getElementById("tagContainer_" + tag)
+                    const messageContainer = document.getElementById("messageContainer_" + tag)
+                    words[tag] = Array.from(tagsContainer.querySelectorAll('.tag')).map(tag => tag.textContent.slice(0, -1));
+
+                    if(!isValidTag(messageContainer.querySelector('#input').value)){
+                        showNotification("Текст бота не может содержать знаки \", \'")
+                        return
+                    }
+                    messages[tag] = messageContainer.querySelector('#input').value;
+               });
+            }
+            catch{
+                words = {};
+            }
+
+            $.ajax({
+                url: 'send', // Укажите ваш URL
+                method: 'POST',
+                data: {"words": JSON.stringify(words), "messages": JSON.stringify(messages)}, // Отправляем данные в формате формы
+                success: function (response) {
+                    showSuccessNotification('Ключевые слова успешно отправлены!');
+                },
+                error: function (jqXHR, textStatus, errorThrown) {
+                    console.error('Ошибка:', textStatus, errorThrown);
+                    showNotification('Ошибка отправки данных.');
+                }
+            });
+        });
+
+        function Load() {
+            $.ajax({
+                url: 'getdata', // Укажите ваш URL
+                method: 'GET',
+                success: function (response) {
+                    console.log(response.words)
+                     Object.keys(response.words).forEach((i) => {
+                        response.words[i].forEach((l) => {
+                            console.log(l, i)
+                            addTag(l, i);
+                        });
+                    });
+                     Object.keys(response.messages).forEach((i) => {
+                         console.log(i)
+                        const input = document.getElementById("messageContainer_" + i).querySelector('#input');
+                        input.value = response.messages[i];
+                     });
+                    showSuccessNotification('Ключевые слова успешно отправлены!');
+                },
+                error: function (jqXHR, textStatus, errorThrown) {
+                    console.error('Ошибка:', textStatus, errorThrown);
+                    showNotification('Ошибка отправки данных.');
+                }
+            });
+        }
+        function addTag(tag, container) {
+            const tagElement = document.createElement("div");
+            tagElement.className = "tag";
+            tagElement.textContent = tag.toLowerCase();
+            const removeButton = document.createElement("span");
+            removeButton.className = "remove-button";
+            removeButton.textContent = "×";
+            tagElement.append(removeButton);
+            if(!categoriesData.includes(container)){
+                createCategoryByName(container);
+            }
+            const container2 = document.getElementById("tagContainer_" + container);// Добавляем теги в начало
+            // Находим последний элемент в контейнере
+            const lastElement = container2.lastElementChild;
+
+            // Добавляем новый элемент перед последним элементом
+            container2.insertBefore(tagElement, lastElement);
+        }
+        function showNotification(message) {
+            notificationMessage.textContent = message;
+            notification.style.display = 'block';
+            notification.style.opacity = '1';
+            notification.style.transform = 'translateY(0)'; // Вытягиваем вниз
+
+            // Скрываем уведомление через 3 секунды
+            setTimeout(() => {
+                hideNotification();
+            }, 3000);
+        }
+
+        function hideNotification() {
+            notification.style.opacity = '0';
+            notification.style.transform = 'translateY(-20px)'; // Сдвигаем вверх
+            setTimeout(() => {
+                notification.style.display = 'none';
+            }, 500);
+        }
+
+        function showSuccessNotification(message) {
+            successMessage.textContent = message;
+            successNotification.style.display = 'block';
+            successNotification.style.opacity = '1';
+            successNotification.style.transform = 'translateY(0)'; // Вытягиваем вниз
+
+            // Скрываем уведомление через 3 секунды
+            setTimeout(() => {
+                hideSuccessNotification();
+            }, 3000);
+        }
+
+        function hideSuccessNotification() {
+            successNotification.style.opacity = '0';
+            successNotification.style.transform = 'translateY(-20px)'; // Сдвигаем вверх
+            setTimeout(() => {
+                successNotification.style.display = 'none';
+            }, 500);
+        }
+
+        closeNotification.addEventListener('click', hideNotification);
+        closeSuccessNotification.addEventListener('click', hideSuccessNotification);
+
+        document.addEventListener('DOMContentLoaded', function () {
+            // Обработка ввода тегов
+            IsLogined()
+            IsAdmin()
+            // Удаление тегов
+            $(document).on('click', '.remove-button', function() {
+                $(this).parent().remove();
+            });
+            // Удаление тегов
+            $(document).on('click', '.remove-category-button', function() {
+                const categoryElement = $(this).closest('.category'); // Получаем ближайший элемент с классом 'category'
+                const categoryId = categoryElement.attr('id'); // Используем attr() для получения ID
+
+                if (categoriesData.includes(categoryId.slice(9))) {
+                    categoriesData = categoriesData.filter(item => item !== categoryId.slice(9));
+                }
+
+                categoryElement.remove(); // Удаляем элемент
+            });
+
+            // Удаление последнего тега при нажатии Backspace
+            $(document).on('keydown', '.tag-input', function(event) {
+                if (event.key === 'Backspace' && this.value === '') {
+                    const tags = $(this).siblings('.tag').toArray();
+                    if (tags.length > 0) {
+                        $(tags[tags.length - 1]).remove();
+                    }
+                }
+            });
+            Load();
+        });
+    </script>
+
+</body>
+</html>

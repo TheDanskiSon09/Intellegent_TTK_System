@@ -1,0 +1,239 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Админ Меню</title>
+    <link rel="icon" href="../static/images/icon.png" type="image/x-icon">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f0faff;
+            padding: 20px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin: 0;
+            flex-direction: column;
+            height: 100%;
+        }
+        h1 {
+            color: #003366;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+        .login-input {
+            display: inline-block;
+            border: 2px solid #007bff;
+            border-radius: 20px;
+            padding: 10px 15px;
+            font-size: 16px;
+            width: 250px;
+            outline: none;
+            background-color: white;
+            color: #333;
+            transition: border-color 0.3s;
+            position: relative;
+        }
+        .eye-button {
+            position: absolute;
+            right: 10px;
+            top: 50%;
+            transform: translateY(-50%);
+            background: none;
+            border: none;
+            cursor: pointer;
+        }
+        .button-container {
+            display: flex;
+            justify-content: center;
+            margin-top: 10px;
+        }
+        .submit-button {
+            background-color: #0088cc;
+            color: white;
+            padding: 12px 24px;
+            border: none;
+            border-radius: 20px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: background-color 0.2s, transform 0.1s;
+            display: flex;
+            align-items: center;
+        }
+        .submit-button:hover {
+            background-color: #007bb8;
+            transform: scale(1.05);
+        }
+        .notification, .success-notification {
+            position: absolute;
+            top: 50px;
+            left: 20px;
+            background-color: rgba(255, 0, 0, 0.7);
+            color: white;
+            padding: 10px 15px;
+            border-radius: 8px;
+            display: none;
+            transition: opacity 0.5s, transform 0.5s;
+            transform: translateY(-20px);
+            width: 250px;
+        }
+        .success-notification {
+            background-color: white;
+            border: 2px solid #007bff;
+            color: #003366;
+        }
+        .close-button {
+            background: transparent;
+            border: none;
+            color: white;
+            cursor: pointer;
+            font-size: 16px;
+            margin-left: 10px;
+        }
+    </style>
+</head>
+<body>
+
+    <div>
+        <h1>Войти:</h1>
+        <div style="display: flex; flex-direction: column; align-items: flex-start;">
+            <label for="LoginInput" style="font-size: 16px; color: gray; margin-bottom: 4px;">Имя:</label>
+            <input type="text" placeholder="Введите логин..." id="LoginInput" class="login-input" />
+        </div>
+        <div style="display: flex; flex-direction: column; align-items: flex-start;">
+            <label for="PasswordInput" style="font-size: 16px; color: gray; margin-bottom: 4px;">Пароль:</label>
+            <div style="position: relative;">
+                <input type="password" placeholder="Введите пароль..." id="PasswordInput" class="login-input" />
+                <button class="eye-button" id="togglePassword">
+                    <i id="eyeIcon" style="width: 30px" class="fas fa-eye"></i>
+                </button>
+            </div>
+        </div>
+        <div class="button-container">
+            <button class="submit-button" id="submitButton">
+                <i class="fas fa-sign-in-alt" style="margin-right: 8px"></i> Войти
+            </button>
+        </div>
+        <div class="notification" id="notification">
+            <span id="notificationMessage"></span>
+            <button class="close-button" id="closeNotification">&times;</button>
+        </div>
+        <div class="success-notification" id="successNotification">
+            <span id="successMessage"></span>
+            <button class="close-button" id="closeSuccessNotification">&times;</button>
+        </div>
+    </div>
+
+    <script>
+        const LoginInput = document.getElementById('LoginInput');
+        const PasswordInput = document.getElementById('PasswordInput');
+        const togglePasswordButton = document.getElementById('togglePassword');
+        const eyeIcon = document.getElementById('eyeIcon');
+        const notification = document.getElementById('notification');
+        const successNotification = document.getElementById('successNotification');
+
+        togglePasswordButton.addEventListener('click', () => {
+            const type = PasswordInput.getAttribute('type') === 'password' ? 'text' : 'password';
+            PasswordInput.setAttribute('type', type);
+            eyeIcon.classList.toggle('fa-eye');
+            eyeIcon.classList.toggle('fa-eye-slash');
+        });
+
+        document.getElementById('submitButton').addEventListener('click', Login);
+
+        function IsLogined() {
+            $.ajax({
+                url: 'Islogined', // Укажите ваш URL
+                method: 'GET',
+                success: function (response) {
+                    console.log(response.message);
+                    if (response.message === true) {
+                        window.location.href = '/';
+                    }
+                },
+                error: function (jqXHR, textStatus, errorThrown) {
+                    console.error('Ошибка:', textStatus, errorThrown);
+                    showNotification('Ошибка отправки данных.');
+                }
+            });
+        }
+
+        function Login() {
+            if (LoginInput.value === "" || PasswordInput.value === "") {
+                showNotification("Логин и пароль не может быть пустым!");
+                return;
+            }
+            $.ajax({
+                url: 'loginSend', // Укажите ваш URL
+                method: 'POST',
+                data: { "login": LoginInput.value, "password": PasswordInput.value },
+                success: function (response) {
+                    if (response.message === true) {
+                        showSuccessNotification('Вы успешно вошли в аккаунт!');
+                        setTimeout(function () {
+                            window.location.href = '/';
+                        }, 1000);
+                    } else {
+                        showNotification('Неверное имя или пароль!');
+                    }
+                },
+                error: function () {
+                    showNotification('Ошибка отправки данных.');
+                }
+            });
+        }
+
+        function showNotification(message) {
+            document.getElementById('notificationMessage').textContent = message;
+            notification.style.display = 'block';
+            notification.style.opacity = '1';
+            notification.style.transform = 'translateY(0)';
+
+            setTimeout(hideNotification, 3000);
+        }
+
+        function hideNotification() {
+            notification.style.opacity = '0';
+            notification.style.transform = 'translateY(-20px)';
+            setTimeout(() => {
+                notification.style.display = 'none';
+            }, 500);
+        }
+
+        function showSuccessNotification(message) {
+            document.getElementById('successMessage').textContent = message;
+            successNotification.style.display = 'block';
+            successNotification.style.opacity = '1';
+            successNotification.style.transform = 'translateY(0)';
+
+            setTimeout(() => {
+                successNotification.style.opacity = '0';
+                successNotification.style.transform = 'translateY(-20px)';
+                setTimeout(() => {
+                    successNotification.style.display = 'none';
+                }, 500);
+            }, 3000);
+        }
+
+        document.getElementById('closeNotification').onclick = hideNotification;
+        document.getElementById('closeSuccessNotification').onclick = function() {
+            successNotification.style.display = 'none';
+        };
+
+        document.addEventListener('DOMContentLoaded', function () {
+            IsLogined();
+        });
+
+        // Обработчик нажатия Enter
+        document.addEventListener('keypress', function(event) {
+            if (event.key === 'Enter') {
+                Login(); // Вызываем функцию Login при нажатии Enter
+            }
+        });
+    </script>
+
+</body>
+</html>
